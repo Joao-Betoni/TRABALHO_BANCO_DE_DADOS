@@ -8,10 +8,10 @@ public class Avaliacao {
     private Long id;
 
     @NotNull
-    private Long idFilme;
+    private Long idFilme; //PK
 
     @NotNull
-    private Long idUsuario;
+    private Long idUsuario; //FK
 
     private String tipo;
     private String titulo;

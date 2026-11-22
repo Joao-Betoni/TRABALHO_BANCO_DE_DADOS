@@ -8,10 +8,10 @@ import jakarta.validation.constraints.NotNull;
 public class Filme {
 
 
-    private Long id;
+    private Long id; //PK
 
     @NotNull
-    private Long idUsuarioCadastro;
+    private Long idUsuarioCadastro; //FK
 
     @NotBlank (message ="Título não pode ser vazio")
     private String titulo;
