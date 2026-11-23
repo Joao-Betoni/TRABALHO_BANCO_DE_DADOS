@@ -8,11 +8,11 @@
     import java.util.List;
 
     @Service
-    public class usuarioService {
+    public class UsuarioService {
 
         private final usuarioDao usuarioDAO;
 
-        public usuarioService(usuarioDao usuarioDAO) {
+        public UsuarioService(usuarioDao usuarioDAO) {
             this.usuarioDAO = usuarioDAO;
         }
 
