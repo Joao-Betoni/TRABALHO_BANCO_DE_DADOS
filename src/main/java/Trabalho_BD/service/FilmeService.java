@@ -3,11 +3,12 @@ package Trabalho_BD.service;
 
 import Trabalho_BD.dao.FilmeDAO;
 import Trabalho_BD.model.Filme;
-import Trabalho_BD.model.Usuario;
+import Trabalho_BD.dto.FilmeFormDTO;
 
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -21,7 +22,6 @@ public class FilmeService {
         this.usuarioService = usuarioService;
     }
 
-    // VALIDAÇÃO DOS DADOS DO FILME
     private void validarDadosFilme(Filme filme) {
 
         if (filme == null) {
@@ -55,101 +55,194 @@ public class FilmeService {
             );
         }
 
-        if (filme.getCadastradoPor() == null || filme.getCadastradoPor() <= 0) {
+        if (filme.getCadastradoPor() == null ||
+                filme.getCadastradoPor() <= 0) {
             throw new IllegalArgumentException(
                     "O usuário responsável pelo cadastro é inválido."
             );
         }
     }
 
-    // CADASTRAR FILME
     public Long cadastrarFilme(Filme filme) {
 
         validarDadosFilme(filme);
 
-        Optional<Usuario> usuario =
-                usuarioService.buscarPorId(filme.getCadastradoPor());
-
-        if (usuario.isEmpty()) {
+        if (usuarioService.buscarPorId(filme.getCadastradoPor()).isEmpty()) {
             throw new IllegalArgumentException(
                     "O usuário responsável pelo cadastro não existe."
+            );
+        }
+
+        boolean filmeDuplicado = filmeDAO.buscarPorTitulo(filme.getTitulo())
+                .stream()
+                .anyMatch(f ->
+                        f.getTitulo().equals(filme.getTitulo()) &&
+                                f.getAno() == filme.getAno()
+                );
+
+        if (filmeDuplicado) {
+            throw new IllegalArgumentException(
+                    "Esse filme já está cadastrado no catálogo."
             );
         }
 
         return filmeDAO.inserirFilme(filme);
     }
 
-    // BUSCAR FILME POR ID
+    public Filme cadastrar(FilmeFormDTO form, Long usuarioId) {
+
+        if (form == null) {
+            throw new IllegalArgumentException(
+                    "Dados do formulário não informados."
+            );
+        }
+
+        if (usuarioId == null || usuarioId <= 0) {
+            throw new IllegalArgumentException(
+                    "O usuário responsável pelo cadastro é inválido."
+            );
+        }
+
+        Filme filme = new Filme();
+
+        filme.setTitulo(form.titulo());
+        filme.setAno(form.ano());
+        filme.setGeneroId(form.generoId());
+        filme.setDuracaoMin(form.duracaoMin());
+        filme.setSinopse(form.sinopse());
+        filme.setCadastradoPor(usuarioId);
+
+        Long id = cadastrarFilme(filme);
+
+        return filmeDAO.buscarPorId(id)
+                .orElseThrow(() -> new IllegalStateException(
+                        "O filme foi cadastrado, mas não foi encontrado."
+                ));
+    }
+
     public Optional<Filme> buscarPorId(Long id) {
 
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("O ID do filme é inválido.");
+            throw new IllegalArgumentException(
+                    "O ID do filme é inválido."
+            );
         }
 
         return filmeDAO.buscarPorId(id);
     }
 
-    // BUSCAR FILMES POR TÍTULO
+    public Filme porId(Long id) {
+        return buscarPorId(id).orElse(null);
+    }
+
     public List<Filme> buscarPorTitulo(String titulo) {
 
         if (titulo == null || titulo.isBlank()) {
-            throw new IllegalArgumentException("O título é obrigatório.");
+            throw new IllegalArgumentException(
+                    "O título é obrigatório."
+            );
         }
 
         return filmeDAO.buscarPorTitulo(titulo);
     }
 
-    // LISTAR TODOS OS FILMES
     public List<Filme> listarFilmes() {
-
         return filmeDAO.listarFilmes();
     }
 
-    // LISTAR FILMES POR GÊNERO
     public List<Filme> listarPorGenero(Long generoId) {
 
         if (generoId == null || generoId <= 0) {
-            throw new IllegalArgumentException("O ID do gênero é inválido.");
+            throw new IllegalArgumentException(
+                    "O ID do gênero é inválido."
+            );
         }
 
         return filmeDAO.listarPorGenero(generoId);
     }
 
-    // LISTAR FILMES POR USUÁRIO
     public List<Filme> listarPorUsuario(Long usuarioId) {
 
         if (usuarioId == null || usuarioId <= 0) {
-            throw new IllegalArgumentException("O ID do usuário é inválido.");
+            throw new IllegalArgumentException(
+                    "O ID do usuário é inválido."
+            );
         }
 
-        Optional<Usuario> usuario = usuarioService.buscarPorId(usuarioId);
-
-        if (usuario.isEmpty()) {
-            throw new IllegalArgumentException("Usuário não encontrado.");
+        if (usuarioService.buscarPorId(usuarioId).isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Usuário não encontrado."
+            );
         }
 
         return filmeDAO.listarPorUsuario(usuarioId);
     }
 
-    // ATUALIZAR FILME
+    public List<Filme> listar(Long genero, String busca) {
+
+        boolean temGenero = genero != null;
+        boolean temBusca = busca != null && !busca.isBlank();
+
+        if (temGenero && temBusca) {
+
+            String termo = busca.toLowerCase(Locale.ROOT);
+
+            return listarPorGenero(genero).stream()
+                    .filter(filme ->
+                            filme.getTitulo()
+                                    .toLowerCase(Locale.ROOT)
+                                    .contains(termo)
+                    )
+                    .toList();
+        }
+
+        if (temGenero) {
+            return listarPorGenero(genero);
+        }
+
+        if (temBusca) {
+            return buscarPorTitulo(busca);
+        }
+
+        return listarFilmes();
+    }
+
     public int atualizarFilme(Filme filme) {
+
+        if (filme == null ||
+                filme.getId() == null ||
+                filme.getId() <= 0) {
+            throw new IllegalArgumentException(
+                    "O ID do filme é inválido."
+            );
+        }
+
+        Filme filmeExistente = filmeDAO.buscarPorId(filme.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Filme não encontrado."
+                ));
+
+        filme.setCadastradoPor(filmeExistente.getCadastradoPor());
 
         validarDadosFilme(filme);
 
-        if (filme.getId() == null || filme.getId() <= 0) {
-            throw new IllegalArgumentException("O ID do filme é inválido.");
-        }
+        boolean filmeDuplicado = filmeDAO.buscarPorTitulo(filme.getTitulo())
+                .stream()
+                .anyMatch(f ->
+                        !f.getId().equals(filme.getId()) &&
+                                f.getTitulo().equals(filme.getTitulo()) &&
+                                f.getAno() == filme.getAno()
+                );
 
-        Optional<Filme> filmeExistente = filmeDAO.buscarPorId(filme.getId());
-
-        if (filmeExistente.isEmpty()) {
-            throw new IllegalArgumentException("Filme não encontrado.");
+        if (filmeDuplicado) {
+            throw new IllegalArgumentException(
+                    "Já existe outro filme com esse título e ano."
+            );
         }
 
         return filmeDAO.atualizarFilme(filme);
     }
 
-    // EXCLUIR FILME
     public boolean excluirFilmePorID(Long id) {
 
         Optional<Filme> filme = buscarPorId(id);
@@ -161,5 +254,16 @@ public class FilmeService {
         int linhasAfetadas = filmeDAO.excluirFilme(id);
 
         return linhasAfetadas > 0;
+    }
+
+    public Object questionarioDe(Long id) {
+
+        if (id == null || id <= 0) {
+            throw new IllegalArgumentException(
+                    "O ID do filme é inválido."
+            );
+        }
+
+        return null;
     }
 }
