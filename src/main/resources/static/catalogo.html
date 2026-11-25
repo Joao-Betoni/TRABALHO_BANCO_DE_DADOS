@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Central do Brasil - Catalogo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar bg-body-tertiary mb-4">
+        <div class="container">
+            <span class="navbar-brand fw-bold">CINE CENTRAL DO BRASIL</span>
+            <div class="d-flex gap-2">
+                <a href="perfil.html" class="btn btn-outline-secondary btn-sm">Meu perfil</a>
+                <a href="relatorios.html" class="btn btn-outline-secondary btn-sm">Relatórios</a>
+                <a href="cadastre-filme.html" class="btn btn-primary btn-sm">+ Filme</a>
+                <button id="btn-sair" class="btn btn-outline-danger btn-sm">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+            <h1 class="h4 me-auto mb-0">Filmes brasileiros</h1>
+            <input id="busca" class="form-control w-auto" type="search" placeholder="Buscar por titulo...">
+            <select id="filtro-genero" class="form-select w-auto"></select>
+        </div>
+
+        <div id="alerta" class="alert alert-danger py-2 d-none" role="alert"></div>
+
+        <div id="grade-filmes" class="row row-cols-1 row-cols-md-3 g-4"></div>
+    </main>
+
+    <script type="module" src="js/catalogo.js"></script>
+</body>
+</html>
