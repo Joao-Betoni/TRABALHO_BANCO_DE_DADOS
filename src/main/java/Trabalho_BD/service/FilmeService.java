@@ -2,13 +2,18 @@
 package Trabalho_BD.service;
 
 import Trabalho_BD.dao.FilmeDAO;
+import Trabalho_BD.dao.AvaliacaoDAO;
 import Trabalho_BD.model.Filme;
 import Trabalho_BD.dto.FilmeFormDTO;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -16,10 +21,14 @@ public class FilmeService {
 
     private final FilmeDAO filmeDAO;
     private final UsuarioService usuarioService;
+    private final AvaliacaoDAO avaliacaoDAO;
 
-    public FilmeService(FilmeDAO filmeDAO, UsuarioService usuarioService) {
+    public FilmeService(FilmeDAO filmeDAO,
+                        UsuarioService usuarioService,
+                        AvaliacaoDAO avaliacaoDAO) {
         this.filmeDAO = filmeDAO;
         this.usuarioService = usuarioService;
+        this.avaliacaoDAO = avaliacaoDAO;
     }
 
     private void validarDadosFilme(Filme filme) {
@@ -89,6 +98,7 @@ public class FilmeService {
         return filmeDAO.inserirFilme(filme);
     }
 
+    @Transactional
     public Filme cadastrar(FilmeFormDTO form, Long usuarioId) {
 
         if (form == null) {
@@ -114,10 +124,48 @@ public class FilmeService {
 
         Long id = cadastrarFilme(filme);
 
+        // RF4 - a MESMA transacao do cadastro do filme grava o instrumento de
+        // avaliacao (1:1), o bloco padrao de questoes e o envio a todos
+        Long avaliacaoId = avaliacaoDAO.inserirAvaliacao(
+                id,
+                "Avaliação do filme " + filme.getTitulo(),
+                "Questionário por temas sobre o filme " + filme.getTitulo());
+        montarBlocoPadrao(avaliacaoId);
+        avaliacaoDAO.atribuirParaTodosUsuarios(avaliacaoId);
+
         return filmeDAO.buscarPorId(id)
                 .orElseThrow(() -> new IllegalStateException(
                         "O filme foi cadastrado, mas não foi encontrado."
                 ));
+    }
+
+    // bloco padrao (RF3, questoes reaproveitadas entre filmes): 1 ESCALA por
+    // tema de nota + 1 ESCOLHA (Plataforma) + 1 TEXTO (Critica)
+    private void montarBlocoPadrao(Long avaliacaoId) {
+        List<String> temasDeNota = List.of(
+                "Avaliação Geral", "Roteiro", "Direção",
+                "Atuação", "Trilha Sonora");
+
+        List<Long> questoes = new ArrayList<>();
+        for (String nomeTema : temasDeNota) {
+            Long questaoId = avaliacaoDAO.primeiraQuestao("ESCALA", nomeTema);
+            if (questaoId != null) {
+                questoes.add(questaoId);
+            }
+        }
+        Long escolha = avaliacaoDAO.primeiraQuestao("ESCOLHA", "Plataforma");
+        if (escolha != null) {
+            questoes.add(escolha);
+        }
+        Long texto = avaliacaoDAO.primeiraQuestao("TEXTO", "Crítica");
+        if (texto != null) {
+            questoes.add(texto);
+        }
+
+        int ordem = 1;
+        for (Long questaoId : questoes) {
+            avaliacaoDAO.inserirQuestaoNoBloco(avaliacaoId, questaoId, ordem++);
+        }
     }
 
     public Optional<Filme> buscarPorId(Long id) {
@@ -256,7 +304,10 @@ public class FilmeService {
         return linhasAfetadas > 0;
     }
 
-    public Object questionarioDe(Long id) {
+    // GET /uel/filmes/{id}/questionario - contrato que a tela filme.ts consome:
+    // { avaliacaoId, filmeTitulo, questoes: [{id, enunciado, tipo, tema,
+    //   escalaMin, escalaMax, obrigatoria, alternativas: [{id, texto}]}] }
+    public Map<String, Object> questionarioDe(Long id) {
 
         if (id == null || id <= 0) {
             throw new IllegalArgumentException(
@@ -264,6 +315,24 @@ public class FilmeService {
             );
         }
 
-        return null;
+        Map<String, Object> instrumento = avaliacaoDAO.instrumentoDoFilme(id)
+                .orElse(null);
+
+        if (instrumento == null) {
+            return null;
+        }
+
+        List<Map<String, Object>> questoes = avaliacaoDAO.questoesDoFilme(id);
+        for (Map<String, Object> questao : questoes) {
+            questao.put("alternativas",
+                    avaliacaoDAO.alternativasDeQuestao((Long) questao.get("id")));
+        }
+
+        Map<String, Object> questionario = new HashMap<>();
+        questionario.put("avaliacaoId", instrumento.get("avaliacaoId"));
+        questionario.put("filmeTitulo", instrumento.get("filmeTitulo"));
+        questionario.put("questoes", questoes);
+
+        return questionario;
     }
 }
