@@ -12,7 +12,7 @@ import java.util.List;
 // RF1: cadastro de questoes (ESCALA, ESCOLHA com alternativas, TEXTO)
 // Usada no painel admin e na montagem do questionario do filme (RF3)
 @RestController
-@RequestMapping("/api/questoes")
+@RequestMapping("/uel/questoes")
 public class QuestaoController {
 
     private final QuestaoService questaoService;

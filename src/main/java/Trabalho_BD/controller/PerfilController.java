@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 // Perfil publico: nome, nome_perfil e a lista de filmes avaliados
 // (as avaliacoes marcadas como anonimas NAO acusam o nome - RF6)
 @RestController
-@RequestMapping("/api/perfil")
+@RequestMapping("/uel/perfil")
 public class PerfilController {
 
     private final PerfilService perfilService;

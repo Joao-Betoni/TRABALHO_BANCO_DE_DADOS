@@ -8,7 +8,7 @@ import java.util.List;
 
 // temas para agrupar as questoes na tela de responder (blocos por tema - RF6)
 @RestController
-@RequestMapping("/api/temas")
+@RequestMapping("/uel/temas")
 public class TemaController {
 
     private final TemaService temaService;

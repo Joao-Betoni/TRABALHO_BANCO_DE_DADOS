@@ -8,7 +8,7 @@ import java.util.List;
 
 // generos para o filtro do catalogo e o select do cadastro de filme
 @RestController
-@RequestMapping("/api/generos")
+@RequestMapping("/uel/generos")
 public class GeneroController {
 
     private final GeneroService generoService;

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 // RF7: os 5 relatorios, cada um = tabela + grafico no front (Chart.js)
 // O SQL de cada um vive no RelatorioDAO, espelhando o database/relatorios.sql
 @RestController
-@RequestMapping("/api/relatorios")
+@RequestMapping("/uel/relatorios")
 public class RelatorioController {
 
     private final RelatorioService relatorioService;

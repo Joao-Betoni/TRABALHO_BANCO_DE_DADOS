@@ -10,7 +10,7 @@ import java.util.List;
 
 // Cadastro de usuario (a tela cadastre-se) e listagem de perfis
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/uel/usuarios")
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
