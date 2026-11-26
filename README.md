@@ -4,7 +4,7 @@ Trabalho acadêmico desenvolvido para a disciplina de Banco de Dados, com o obje
 
 O projeto foi desenvolvido em dupla pelos contribuidores deste repositório.
 
-*Código disponível na branch Master
+# Observação: Código disponível na branch Master
 
 ## 1. Proposta
 
