@@ -79,6 +79,7 @@ public class RespostaDAO {
         return jdbcTemplate.queryForList(
                 """
                 SELECT a.id            AS "avaliacaoId",
+                       f.id            AS "filmeId",
                        f.titulo        AS titulo,
                        f.ano           AS ano,
                        au.id           AS "avaliacaoUsuarioId",
@@ -90,5 +91,39 @@ public class RespostaDAO {
                 ORDER BY f.titulo, f.ano
                 """,
                 usuarioId);
+    }
+
+    // respostas detalhadas de um perfil (uma linha por resposta; o service agrupa
+    // por filme). incluirAnonimas=false e a visao publica - RF6: avaliação
+    // anônima nao acusa o nome de ninguém; so o dono ve as dele
+    public List<Map<String, Object>> respostasDoPerfil(String nomePerfil,
+                                                       boolean incluirAnonimas) {
+        String sql = """
+                SELECT a.id              AS "avaliacaoId",
+                       f.id              AS "filmeId",
+                       f.titulo          AS titulo,
+                       f.ano             AS ano,
+                       au.enviada_em     AS "enviadaEm",
+                       au.anonima        AS anonima,
+                       q.enunciado       AS enunciado,
+                       t.nome            AS tema,
+                       q.tipo            AS tipo,
+                       r.nota            AS nota,
+                       alt.texto         AS "alternativaTexto",
+                       r.texto           AS texto
+                FROM avaliacao_usuario au
+                JOIN usuario u           ON u.id  = au.usuario_id
+                JOIN avaliacao a         ON a.id  = au.avaliacao_id
+                JOIN filme f             ON f.id  = a.filme_id
+                JOIN resposta r          ON r.avaliacao_usuario_id = au.id
+                JOIN questao q           ON q.id  = r.questao_id
+                JOIN tema t              ON t.id  = q.tema_id
+                JOIN avaliacao_questao aq ON aq.avaliacao_id = a.id AND aq.questao_id = q.id
+                LEFT JOIN alternativa alt ON alt.id = r.alternativa_id
+                WHERE u.nome_perfil = ?%s
+                ORDER BY f.titulo, f.ano, aq.ordem
+                """.formatted(incluirAnonimas ? "" : " AND NOT au.anonima");
+
+        return jdbcTemplate.queryForList(sql, nomePerfil);
     }
 }

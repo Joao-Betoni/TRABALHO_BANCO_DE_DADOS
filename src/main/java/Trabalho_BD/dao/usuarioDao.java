@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -117,6 +118,21 @@ public class usuarioDao {
                 sql,
                 usuarioRowMapper
         );
+    }
+
+    // perfis PUBLICOS da comunidade (tela usuarios.html): nome, @perfil e
+    // categoria - nunca email/senha (o perfil e publico por definicao, RF6)
+    public List<Map<String, Object>> listarPerfisPublicos() {
+
+        String sql = """
+                SELECT nome,
+                       nome_perfil AS "nomePerfil",
+                       categoria
+                FROM usuario
+                ORDER BY nome
+                """;
+
+        return jdbcTemplate.queryForList(sql);
     }
 
     // UPDATE

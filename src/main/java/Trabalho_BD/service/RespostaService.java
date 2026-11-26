@@ -4,11 +4,14 @@ import Trabalho_BD.dao.AvaliacaoDAO;
 import Trabalho_BD.dao.RespostaDAO;
 import Trabalho_BD.dto.FormularioRespostaDTO;
 import Trabalho_BD.dto.RespostaQuestaoDTO;
+import Trabalho_BD.model.Usuario;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -150,5 +153,48 @@ public class RespostaService {
         }
 
         return respostaDAO.listarAvaliacoesDoUsuario(usuarioId);
+    }
+
+    // GET /uel/avaliacoes/usuario/{nomePerfil}: respostas detalhadas de um
+    // perfil. Se o logado e o dono do perfil, ele ve as anonimas dele (RF6);
+    // qualquer outro ve somente as publicas. Formato por filme:
+    // { avaliacaoId, filmeId, titulo, ano, enviadaEm, anonima, respostas: [...] }
+    public List<Map<String, Object>> avaliacoesDePerfil(String nomePerfil, Usuario logado) {
+
+        if (nomePerfil == null || nomePerfil.isBlank()) {
+            throw new IllegalArgumentException("O nome de perfil é inválido.");
+        }
+
+        boolean dono = logado != null && nomePerfil.equals(logado.getNomePerfil());
+        List<Map<String, Object>> linhas = respostaDAO.respostasDoPerfil(nomePerfil, dono);
+
+        Map<Long, Map<String, Object>> porFilme = new LinkedHashMap<>();
+        for (Map<String, Object> linha : linhas) {
+            Long avaliacaoId = ((Number) linha.get("avaliacaoId")).longValue();
+
+            Map<String, Object> item = porFilme.get(avaliacaoId);
+            if (item == null) {
+                item = new HashMap<>();
+                item.put("avaliacaoId", avaliacaoId);
+                item.put("filmeId", linha.get("filmeId"));
+                item.put("titulo", linha.get("titulo"));
+                item.put("ano", linha.get("ano"));
+                item.put("enviadaEm", linha.get("enviadaEm"));
+                item.put("anonima", linha.get("anonima"));
+                item.put("respostas", new ArrayList<Map<String, Object>>());
+                porFilme.put(avaliacaoId, item);
+            }
+
+            Map<String, Object> resposta = new HashMap<>();
+            resposta.put("tema", linha.get("tema"));
+            resposta.put("enunciado", linha.get("enunciado"));
+            resposta.put("tipo", linha.get("tipo"));
+            resposta.put("nota", linha.get("nota"));
+            resposta.put("alternativaTexto", linha.get("alternativaTexto"));
+            resposta.put("texto", linha.get("texto"));
+            ((List<Map<String, Object>>) item.get("respostas")).add(resposta);
+        }
+
+        return new ArrayList<>(porFilme.values());
     }
 }

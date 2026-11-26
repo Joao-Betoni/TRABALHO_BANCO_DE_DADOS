@@ -1,4 +1,5 @@
 package Trabalho_BD.model;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Usuario {
     private Long id;

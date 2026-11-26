@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 // Cadastro de usuario (a tela cadastre-se) e listagem de perfis
 @RestController
@@ -17,6 +18,12 @@ public class UsuarioController {
 
     public UsuarioController(UsuarioService usuarioService){
         this.usuarioService = usuarioService;
+    }
+
+    // perfis publicos da comunidade (tela usuarios.html -> perfil.html?id=X)
+    @GetMapping
+    public List<Map<String, Object>> perfisPublicos(){
+        return usuarioService.listarPerfisPublicos();
     }
 
     // criar conta (login simples: email + senha)

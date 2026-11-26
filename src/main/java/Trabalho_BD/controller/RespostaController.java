@@ -20,7 +20,10 @@ public class RespostaController {
     //Minhas avaliacoes: pendentes e feitas (nome temporario "me")
     @GetMapping("/me")
     public ResponseEntity<?> minhas(HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuarioLogado");
+        Usuario usuario = SessaoAtual.usuario(session);
+        if (usuario == null) {
+            return ResponseEntity.status(401).body("Entre para ver suas avaliações.");
+        }
         return ResponseEntity.ok(respostaService.minhasAvaliacoes(usuario.getId()));
     }
 
@@ -30,7 +33,10 @@ public class RespostaController {
     public ResponseEntity<?> responder(@PathVariable Long id,
                                        @RequestBody FormularioRespostaDTO form,
                                        HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuarioLogado");
+        Usuario usuario = SessaoAtual.usuario(session);
+        if (usuario == null) {
+            return ResponseEntity.status(401).body("Entre para avaliar.");
+        }
         try{
             respostaService.registrar(id, usuario.getId(), form);
             return ResponseEntity.status(201).build();
@@ -38,5 +44,14 @@ public class RespostaController {
             // questao obrigatoria vazia, nota fora da escala, filme ja avaliado
             return ResponseEntity.status(400).body(e.getMessage());
         }
+    }
+
+    // respostas detalhadas de um perfil (tela perfil.html). Sem sessao ou com
+    // sessao de outra pessoa: somente as publicas; o dono ve as anonimas dele
+    @GetMapping("/usuario/{nomePerfil}")
+    public ResponseEntity<?> porPerfil(@PathVariable String nomePerfil,
+                                       HttpSession session){
+        Usuario usuario = SessaoAtual.usuario(session);
+        return ResponseEntity.ok(respostaService.avaliacoesDePerfil(nomePerfil, usuario));
     }
 }

@@ -34,9 +34,12 @@ public class QuestaoController {
                 : ResponseEntity.ok(questao);
     }
 
-    // a transacao (questao + alternativas) vive no service
+    // a transacao (questao + alternativas) vive no service; so com login
     @PostMapping
     public ResponseEntity<?> salvar(@RequestBody QuestaoFormDTO form, HttpSession session){
+        if (SessaoAtual.usuario(session) == null) {
+            return ResponseEntity.status(401).body("Entre para cadastrar questões.");
+        }
         try{
             Questao questao = questaoService.salvar(form);
             return ResponseEntity.status(201).body(questao);
@@ -46,8 +49,12 @@ public class QuestaoController {
         }
     }
 
+    // so com login: questao usada em avaliacao tem exclusao bloqueada no service
     @DeleteMapping("/{id}")
     public ResponseEntity<?> excluir(@PathVariable Long id, HttpSession session){
+        if (SessaoAtual.usuario(session) == null) {
+            return ResponseEntity.status(401).body("Entre para excluir questões.");
+        }
         try{
             questaoService.excluir(id);
             return ResponseEntity.status(200).build();

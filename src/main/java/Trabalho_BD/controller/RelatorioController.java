@@ -28,10 +28,16 @@ public class RelatorioController {
         return ResponseEntity.ok(relatorioService.top10(busca));
     }
 
-    // R3 - filmes sem avaliacao / questoes nunca usadas (LEFT/RIGHT JOIN)
+    // R3a - filmes sem avaliacao (LEFT JOIN: o zero tem que aparecer)
     @GetMapping("/sem-avaliacao")
     public ResponseEntity<?> semAvaliacao(){
         return ResponseEntity.ok(relatorioService.semAvaliacao());
+    }
+
+    // R3b - temas e questoes que ninguem respondeu (RIGHT JOIN)
+    @GetMapping("/sem-avaliacao/temas")
+    public ResponseEntity<?> temasSemResposta(){
+        return ResponseEntity.ok(relatorioService.temasSemResposta());
     }
 
     // R4 - evolucao semanal das notas por grupo (date_trunc, datas, IN)

@@ -39,7 +39,11 @@ public class FilmeController {
     // + avaliacao_questao + destinatarios) vive DENTRO do service (RF2/RF3/RF4)
     @PostMapping
     public ResponseEntity<?> cadastrar(@RequestBody FilmeFormDTO form, HttpSession session){
-        Usuario usuario = (Usuario) session.getAttribute("usuarioLogado");
+        Usuario usuario = SessaoAtual.usuario(session);
+        if (usuario == null) {
+            // antes: NullPointerException -> 500; agora 401 limpo
+            return ResponseEntity.status(401).body("Entre para cadastrar um filme.");
+        }
         try{
             Filme filme = filmeService.cadastrar(form, usuario.getId());
             return ResponseEntity.status(201).body(filme);

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UsuarioService {
@@ -148,6 +149,13 @@ public class UsuarioService {
     public List<Usuario> listarUsuarios() {
 
         return usuarioDAO.listarUsuarios();
+    }
+
+    // perfis publicos da comunidade (tela usuarios.html): so nome, @perfil e
+    // categoria - a lista passa longe de email e senha (RF6)
+    public List<Map<String, Object>> listarPerfisPublicos() {
+
+        return usuarioDAO.listarPerfisPublicos();
     }
 
     public int atualizarUsuario(Usuario usuario) {
