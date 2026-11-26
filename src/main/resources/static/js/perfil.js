@@ -10,11 +10,11 @@ async function iniciar() {
     const perfil = await apiJson(`/perfil/${encodeURIComponent(nome)}`);
     document.getElementById('perfil-nome').textContent = perfil.nome;
     document.getElementById('perfil-usuario').textContent = `@${perfil.nomePerfil}`;
-    document.getElementById('lista-avaliacoes').innerHTML = perfil.avaliacoes.map((a) => `
-        <div class="list-group-item d-flex justify-content-between align-items-center">
-            <span>${a.titulo} <span class="text-body-secondary">(${a.ano})</span></span>
-            <span class="badge bg-warning text-dark">${a.nota ? '⭐ '.repeat(a.nota) : 'sem nota'}</span>
-        </div>`).join('')
+    document.getElementById('lista-avaliacoes').innerHTML = (perfil.filmesAvaliados ?? []).map((a) => `
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+        <span>${a.titulo} <span class="text-body-secondary">(${a.ano})</span></span>
+        <span class="badge bg-warning text-dark">Avaliado</span>
+    </div>`).join('')
         || '<p class="text-body-secondary mt-2">Nenhuma avaliação pública ainda.</p>';
 }
 iniciar().catch((erro) => mostrarAlerta('alerta', erro.message));
