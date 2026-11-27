@@ -4,9 +4,11 @@
 --
 -- Volume exigido na carga (enunciado):
 --   - 22 usuarios (>= 20), sendo 2 administradores
---   - 9 avaliacoes de filme (>= 5), 1:1 com os 9 filmes do catalogo
+--   - 12 avaliacoes de filme (secao 10 garante 11 filmes avaliados; o FETCH
+--     FIRST 10 do R2 mostra o corte de verdade. Lavoura Arcaica segue fora
+--     da conta, sem resposta nenhuma)
 --   - 30 questoes no banco (>= 30), 7 delas montando o instrumento de cada filme
---   - ~150 tentativas (avaliacao_usuario), ~1000 respostas
+--   - ~210 tentativas (avaliacao_usuario), ~1400 respostas
 --   - 1 filme sem nenhuma resposta (Lavoura Arcaica) para provar o LEFT JOIN do R3
 --   - vieses propositos para os graficos mostrarem diferencas:
 --       * Cidade de Deus com media ~4.6 e Madame Sata com media ~2.4
@@ -282,14 +284,146 @@ JOIN questao q            ON q.id = aq.questao_id AND q.tipo = 'TEXTO'
 WHERE random() < 0.6;
 
 -- -----------------------------------------------------------------------------
--- 10) TRUNCATE para recarregar (DESCOMENTE so em banco ja povoado)
+-- 10) FILMES ADICIONAIS: +3 filmes avaliados para o ranking (R2) ter sempre
+--     mais de 10 candidados (FETCH FIRST 10 mostra o corte de verdade).
+--     Lavoura Arcaica segue de proposito sem resposta (a prova do LEFT JOIN
+--     do R3 fica intacta). Mesmas regras dos anteriores: instrumento com as
+--     MESMAS 7 questoes do bloco, destinatarios = todos os usuarios,
+--     ~85% dos usuarios respondem, notas com o mesmo padrao de vieses.
+-- -----------------------------------------------------------------------------
+INSERT INTO filme (titulo, ano, genero_id, duracao_min, sinopse, cadastrado_por) VALUES
+ ('Ainda Estou Aqui', 2024,
+     (SELECT id FROM genero WHERE nome = 'Drama'), 135,
+     'Eunice Paiva transforma a perda de Rubens, desaparecido na ditadura, em forca para criar os filhos e buscar a verdade.',
+     (SELECT id FROM usuario WHERE nome_perfil = 'igor.o')),
+ ('O Homem que Copiava', 2003,
+     (SELECT id FROM genero WHERE nome = 'Comédia'), 100,
+     'Andre, operador de copiadora em Sao Paulo, segue as janelas do predio vizinho com um teleobjetivo e se prende ao plano de uma golpeira.',
+     (SELECT id FROM usuario WHERE nome_perfil = 'joao.b')),
+ ('Até que a Sorte os Separe', 2012,
+     (SELECT id FROM genero WHERE nome = 'Comédia'), 110,
+     'Tiao ganha na loteria e deixa de ser pao-duro: dez anos depois, desperdicou tudo e precisa reencontrar o jeito avaro de viver para reerguer a familia.',
+     (SELECT id FROM usuario WHERE nome_perfil = 'joao.b'));
+
+-- instrumento (1:1) so para os filmes novos
+INSERT INTO avaliacao (filme_id, titulo, descricao, data_inicio)
+SELECT id, titulo, 'Questionário de 7 questões sobre o filme ' || titulo, now()
+FROM filme
+WHERE titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe');
+
+-- as MESMAS 7 questoes do bloco padrao, na mesma ordem
+WITH bloco(ordem, enunciado) AS (VALUES
+ (1,'Como você avalia o filme de modo geral?'),
+ (2,'A história prende sua atenção do início ao fim?'),
+ (3,'Como você avalia a direção do filme?'),
+ (4,'Como você avalia o desempenho dos atores?'),
+ (5,'A trilha sonora combina com o clima das cenas?'),
+ (6,'Onde você costuma assistir a filmes brasileiros?'),
+ (7,'Escreva sua crítica do filme: o que funcionou e o que não funcionou.')
+)
+INSERT INTO avaliacao_questao (avaliacao_id, questao_id, ordem)
+SELECT a.id, q.id, b.ordem
+FROM avaliacao a
+JOIN filme f      ON f.id = a.filme_id
+CROSS JOIN bloco b
+JOIN questao q    ON q.enunciado = b.enunciado
+WHERE f.titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe');
+
+-- RF4: instrumento dos filmes novos vai para todos os usuarios
+INSERT INTO avaliacao_destinatario (avaliacao_id, usuario_id)
+SELECT a.id, u.id
+FROM avaliacao a
+JOIN filme f  ON f.id = a.filme_id
+CROSS JOIN usuario u
+WHERE f.titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe');
+
+-- tentativas dos filmes novos: usuarios JA EXISTENTES, mesma regra (85%,
+-- espalhadas em ~10 semanas, ~1/4 anonimas)
+INSERT INTO avaliacao_usuario (avaliacao_id, usuario_id, enviada_em, anonima)
+SELECT a.id,
+       u.id,
+       now() - (floor(random() * 70)::int * INTERVAL '1 day'),
+       random() < 0.25
+FROM avaliacao a
+JOIN filme f  ON f.id = a.filme_id
+CROSS JOIN usuario u
+WHERE f.titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe')
+  AND random() < 0.85;
+
+-- 10a. ESCALA: mesmo padrao de vieses da secao 9a (base do filme + categoria
+--      + periodo + tema + ruido)
+WITH nota_base(titulo, base) AS (VALUES
+ ('Ainda Estou Aqui', 4.5),
+ ('O Homem que Copiava', 3.6),
+ ('Até que a Sorte os Separe', 3.5)
+)
+INSERT INTO resposta (avaliacao_usuario_id, questao_id, nota)
+SELECT au.id, q.id,
+       GREATEST(1, LEAST(5, ROUND(
+           b.base
+         + CASE u.categoria WHEN 'CRITICO' THEN -0.7 WHEN 'CINEFILO' THEN 0.1 ELSE 0 END
+         + CASE WHEN au.enviada_em >= now() - INTERVAL '4 weeks' THEN 0.3 ELSE 0 END
+         + CASE t.nome WHEN 'Avaliação Geral' THEN 0.2 WHEN 'Trilha Sonora' THEN -0.4 ELSE 0 END
+         + (random() * 1.4 - 0.7)
+       )::smallint))
+FROM avaliacao_usuario au
+JOIN avaliacao a  ON a.id = au.avaliacao_id
+JOIN filme f      ON f.id = a.filme_id
+JOIN nota_base b  ON b.titulo = f.titulo
+JOIN avaliacao_questao aq ON aq.avaliacao_id = a.id
+JOIN questao q    ON q.id = aq.questao_id AND q.tipo = 'ESCALA'
+JOIN tema t       ON t.id = q.tema_id
+JOIN usuario u    ON u.id = au.usuario_id;
+
+-- 10b. ESCOLHA: sorteia uma alternativa da propria questao
+INSERT INTO resposta (avaliacao_usuario_id, questao_id, alternativa_id)
+SELECT au.id, q.id, alt.id
+FROM avaliacao_usuario au
+JOIN avaliacao a          ON a.id = au.avaliacao_id
+JOIN filme f              ON f.id = a.filme_id
+JOIN avaliacao_questao aq ON aq.avaliacao_id = a.id
+JOIN questao q            ON q.id = aq.questao_id AND q.tipo = 'ESCOLHA'
+CROSS JOIN LATERAL (
+    SELECT x.id
+    FROM alternativa x
+    WHERE x.questao_id = q.id
+    ORDER BY random()
+    LIMIT 1
+) alt
+WHERE f.titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe');
+
+-- 10c. TEXTO: ~60% das tentativas escrevem critica (mesmas frases da secao 9c)
+INSERT INTO resposta (avaliacao_usuario_id, questao_id, texto)
+SELECT au.id, q.id,
+       (ARRAY[
+           'Um dos melhores filmes brasileiros que já assisti; recomendo de olhos fechados.',
+           'A história é bonita, mas o ritmo arrasta no meio.',
+           'O elenco carrega o filme inteiro nas costas.',
+           'A fotografia é linda, mas o roteiro não sustenta o final.',
+           'Não é para todo mundo, mas quem gostar vai amar.',
+           'Assisti por indicação e acabou entrando na minha lista de favoritos.',
+           'Esperava mais pela fama; ainda assim tem cenas muito fortes.',
+           'Um retrato duro e honesto do Brasil.',
+           'Emocionante do começo ao fim - chorei na última cena.',
+           'Boa ideia, execução mediana: vale o tempo, sem grandes surpresas.'
+       ])[floor(random() * 10)::int + 1]
+FROM avaliacao_usuario au
+JOIN avaliacao a          ON a.id = au.avaliacao_id
+JOIN filme f              ON f.id = a.filme_id
+JOIN avaliacao_questao aq ON aq.avaliacao_id = a.id
+JOIN questao q            ON q.id = aq.questao_id AND q.tipo = 'TEXTO'
+WHERE f.titulo IN ('Ainda Estou Aqui', 'O Homem que Copiava', 'Até que a Sorte os Separe')
+  AND random() < 0.6;
+
+-- -----------------------------------------------------------------------------
+-- 11) TRUNCATE para recarregar (DESCOMENTE so em banco ja povoado)
 -- -----------------------------------------------------------------------------
 -- TRUNCATE resposta, avaliacao_usuario, avaliacao_destinatario,
 --           avaliacao_questao, avaliacao, alternativa, questao, tema,
 --           filme, genero, usuario RESTART IDENTITY CASCADE;
 
 -- -----------------------------------------------------------------------------
--- 11) CONFERENCIAS (descomente para checar depois de rodar)
+-- 12) CONFERENCIAS (descomente para checar depois de rodar)
 -- -----------------------------------------------------------------------------
 -- SELECT 'usuario' t, COUNT(*) FROM usuario            UNION ALL
 -- SELECT 'genero',       COUNT(*) FROM genero          UNION ALL
