@@ -47,6 +47,11 @@ async function carregarR3() {
     const linhas = await apiJson('/relatorios/sem-avaliacao');
     desenharBarras('grafico-r3', linhas.map((l) => l.titulo), linhas.map((l) => l.respostas));
     desenharTabela('tabela-r3', ['Filme', 'Avaliadores', 'Respostas'], linhas.map((l) => [l.titulo, String(l.avaliadores), String(l.respostas)]));
+
+    // R3b - temas/questoes sem resposta nem uma (RIGHT JOIN: Impressoes aparece com 0)
+    const temas = await apiJson('/relatorios/sem-avaliacao/temas');
+    desenharTabela('tabela-r3b', ['Tema', 'Questões', 'Respostas'],
+        temas.map((l) => [l.tema, String(l.questoes), String(l.respostas)]));
 }
 async function carregarR4() {
     const linhas = await apiJson('/relatorios/evolucao');
