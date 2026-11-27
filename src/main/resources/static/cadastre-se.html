@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Central do Brasil - Cadastre-se</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body class="d-flex align-items-center justify-content-center">
+    <main class="card shadow" style="width: 26rem;">
+        <div class="card-body p-4">
+            <h1 class="h3 text-center mb-1">CINE CENTRAL DO BRASIL</h1>
+            <p class="text-center text-body-secondary mb-4">Crie sua conta e comece a avaliar</p>
+
+            <div id="alerta" class="alert alert-danger py-2 d-none" role="alert"></div>
+
+            <form id="form-cadastro">
+                <div class="mb-3">
+                    <label for="nome" class="form-label">Nome completo</label>
+                    <input type="text" class="form-control" id="nome" required>
+                </div>
+                <div class="mb-3">
+                    <label for="nomePerfil" class="form-label">Nome de perfil (@)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">@</span>
+                        <input type="text" class="form-control" id="nomePerfil" pattern="[a-zA-Z0-9._]+" required>
+                    </div>
+                    <div class="form-text">Aparece no endereço do seu perfil público.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">Endereço de email</label>
+                    <input type="email" class="form-control" id="email" required>
+                </div>
+                <div class="mb-3">
+                    <label for="senha" class="form-label">Senha</label>
+                    <input type="password" class="form-control" id="senha" minlength="6" required>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Criar conta</button>
+                    <a class="btn btn-link" href="index.html">Já tenho conta</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module" src="js/cadastre-se.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+/* Cine Central do Brasil - estilo geral (herda do Bootstrap) */
+
+body {
+    min-height: 100vh;
+    background: #f3e6d0; /* tom de bilhete de cinema do login/registro */
+}
+
+/* estrelas do questionario (1 a 5) - um radio por nota */
+.estrela-opcao {
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+    padding: .35rem .8rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.estrela-opcao input { display: none; }
+
+.estrela-opcao.marcada {
+    background: #ffc107; /* amarelo da estrela */
+    border-color: #ffc107;
+    font-weight: 600;
+}

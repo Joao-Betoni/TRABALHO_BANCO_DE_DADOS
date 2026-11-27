@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cine Central do Brasil - Relatórios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar bg-body-tertiary mb-4">
+        <div class="container">
+            <a href="catalogo.html" class="navbar-brand fw-bold">CINE CENTRAL DO BRASIL</a>
+            <a href="catalogo.html" class="btn btn-outline-secondary btn-sm">Catálogo</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <h1 class="h4 mb-4">Relatórios da plataforma (RF7)</h1>
+        <div id="alerta" class="alert alert-danger py-2 d-none mb-4" role="alert"></div>
+
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-r1" type="button">Tema × Gênero</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-r2" type="button">Top 10</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-r3" type="button">Sem avaliação</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-r4" type="button">Evolução</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-r5" type="button">Mais criticados</button></li>
+        </ul>
+
+        <div class="tab-content bg-body shadow-sm rounded-bottom p-4 mt-3">
+            <div class="tab-pane fade show active" id="tab-r1">
+                <div class="row g-4">
+                    <div class="col-lg-6"><canvas id="grafico-r1" height="260"></canvas></div>
+                    <div class="col-lg-6"><table id="tabela-r1" class="table table-striped"></table></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab-r2">
+                <div class="row g-4">
+                    <div class="col-lg-6"><canvas id="grafico-r2" height="300"></canvas></div>
+                    <div class="col-lg-6"><table id="tabela-r2" class="table table-striped"></table></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab-r3">
+                <div class="row g-4">
+                    <div class="col-lg-6"><canvas id="grafico-r3" height="260"></canvas></div>
+                    <div class="col-lg-6"><table id="tabela-r3" class="table table-striped"></table></div>
+                </div>
+                <h3 class="h6 mt-4">Temas e questões que ninguém respondeu <span class="text-body-secondary">(RIGHT JOIN — o zero aparece)</span></h3>
+                <table id="tabela-r3b" class="table table-striped w-auto"></table>
+            </div>
+            <div class="tab-pane fade" id="tab-r4">
+                <div class="mb-3">
+                    <select id="filtro-tema-r4" class="form-select w-auto"></select>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-7"><canvas id="grafico-r4" height="260"></canvas></div>
+                    <div class="col-lg-5"><table id="tabela-r4" class="table table-striped"></table></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tab-r5">
+                <div class="row g-4">
+                    <div class="col-lg-6"><canvas id="grafico-r5" height="260"></canvas></div>
+                    <div class="col-lg-6"><table id="tabela-r5" class="table table-striped"></table></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
+    <script type="module" src="js/relatorios.js"></script>
+</body>
+</html>
